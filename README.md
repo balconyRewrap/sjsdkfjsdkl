@@ -28,3 +28,49 @@ Not working (might be official) download links for SentiRuEval-2015:
 
 - <https://drive.google.com/drive/folders/1f2bIJ-JDxIRCI1gEdEdB1kMe7lGJK02m>
 - <https://drive.google.com/drive/folders/0BxlA8wH3PTUfflI5LUM0SmVvZ1puc2NaalQtWmdEbEw1Yi0zYkl1cjdDN2puelFIRDBHdVU>
+
+## Train Russian sentiment classifier
+
+The repository includes `train_sentiment.py`, which trains a transformer model for
+three labels: `negative`, `neutral`, `positive`. By default it combines
+RuSentiment, RuReviews, and Kaggle Russian News.
+
+Install dependencies with uv:
+
+```bash
+uv sync
+```
+
+If the default uv cache directory is not writable, use a local cache:
+
+```bash
+UV_CACHE_DIR=.uv-cache uv sync
+```
+
+Run a quick smoke test on a small balanced subset:
+
+```bash
+uv run python train_sentiment.py --max-per-label 200 --epochs 1
+```
+
+Run a fuller training job:
+
+```bash
+uv run python train_sentiment.py --epochs 3 --batch-size 16
+```
+
+The default checkpoint is `cointegrated/rubert-tiny2`, which trains quickly. For
+better quality on a GPU machine, try:
+
+```bash
+uv run python train_sentiment.py --model-name ai-forever/ruBert-base --epochs 3 --batch-size 8
+```
+
+The trained model and tokenizer are saved to `models/rubert-sentiment`.
+
+Check a trained model:
+
+```bash
+uv run python test.py
+uv run python test.py --text "Отличный товар" "Ужасное качество"
+```

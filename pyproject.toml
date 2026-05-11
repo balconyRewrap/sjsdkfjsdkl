@@ -1,0 +1,19 @@
+[project]
+name = "russian-sentiment-emotion-datasets"
+version = "0.1.0"
+description = "Train a transformer sentiment classifier for Russian text."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "accelerate>=0.34.0",
+    "datasets>=2.20.0",
+    "evaluate>=0.4.2",
+    "numpy>=1.26.0",
+    "pandas>=2.2.0",
+    "scikit-learn>=1.5.0",
+    "torch>=2.3.0",
+    "transformers>=5.8.0",
+]
+
+[tool.uv]
+package = false
