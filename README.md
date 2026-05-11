@@ -31,10 +31,21 @@ Not working (might be official) download links for SentiRuEval-2015:
 
 ## Train Russian sentiment classifier
 
-The repository includes `train_sentiment.py`, which trains a transformer model for
-three labels: `negative`, `neutral`, `positive`. By default it combines every
-dataset that can be safely mapped to these labels: RuSentiment, RuReviews,
-Kaggle Russian News, RuTweetCorp, SentiRuEval, and Linis Crowd document ratings.
+The repository includes shared dataset code in `sentiment_data.py`. Other scripts
+can import `build_sentiment_dataframe()` or `load_prepared_dataframe()` to get a
+single DataFrame with `text`, `label`, and `source` columns.
+
+There are two training scripts:
+
+- `train_sentiment.py`: fine-tunes a pretrained Hugging Face transformer.
+- `train_from_scratch.py`: trains a small PyTorch `nn.TransformerEncoder` from
+  scratch with its own vocabulary.
+
+Both scripts use three labels: `negative`, `neutral`, `positive`. By default they
+combine every dataset that can be safely mapped to these labels: RuSentiment,
+RuReviews, Kaggle Russian News, RuTweetCorp, SentiRuEval, and Linis Crowd
+document ratings. Local `rus_sen_dat/datasets.csv` and folder-based
+`kin_set_dat`/`kin_sen_dat` are included when present.
 
 Install dependencies with uv:
 
@@ -70,6 +81,25 @@ Train from the prepared dataset:
 
 ```bash
 uv run python train_sentiment.py --dataset-csv prepared/combined_sentiment.csv.gz --epochs 3 --batch-size 16
+```
+
+Train a transformer from scratch:
+
+```bash
+uv run python train_from_scratch.py --dataset-csv prepared/combined_sentiment.csv.gz --epochs 5 --batch-size 64
+```
+
+Quick smoke test for the from-scratch model:
+
+```bash
+uv run python train_from_scratch.py --max-per-label 200 --epochs 1 --batch-size 32
+```
+
+Check the from-scratch model:
+
+```bash
+uv run python test_from_scratch.py
+uv run python test_from_scratch.py --text "Отличный товар" "Ужасное качество"
 ```
 
 The default checkpoint is `cointegrated/rubert-tiny2`, which trains quickly. For
