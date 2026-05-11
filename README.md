@@ -32,8 +32,9 @@ Not working (might be official) download links for SentiRuEval-2015:
 ## Train Russian sentiment classifier
 
 The repository includes `train_sentiment.py`, which trains a transformer model for
-three labels: `negative`, `neutral`, `positive`. By default it combines
-RuSentiment, RuReviews, and Kaggle Russian News.
+three labels: `negative`, `neutral`, `positive`. By default it combines every
+dataset that can be safely mapped to these labels: RuSentiment, RuReviews,
+Kaggle Russian News, RuTweetCorp, SentiRuEval, and Linis Crowd document ratings.
 
 Install dependencies with uv:
 
@@ -59,6 +60,18 @@ Run a fuller training job:
 uv run python train_sentiment.py --epochs 3 --batch-size 16
 ```
 
+Build one combined dataset without training:
+
+```bash
+uv run python train_sentiment.py --only-build-dataset --save-dataset prepared/combined_sentiment.csv.gz
+```
+
+Train from the prepared dataset:
+
+```bash
+uv run python train_sentiment.py --dataset-csv prepared/combined_sentiment.csv.gz --epochs 3 --batch-size 16
+```
+
 The default checkpoint is `cointegrated/rubert-tiny2`, which trains quickly. For
 better quality on a GPU machine, try:
 
@@ -73,4 +86,7 @@ Check a trained model:
 ```bash
 uv run python test.py
 uv run python test.py --text "Отличный товар" "Ужасное качество"
+uv run python test.py --input-file texts.txt
+uv run python test.py --input-file texts.txt --input-format paragraph
+uv run python test.py --input-file texts.txt --input-format whole
 ```

@@ -18,14 +18,42 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run inference with a trained Russian sentiment model.")
     parser.add_argument("--model-dir", type=Path, default=Path("models/rubert-sentiment"))
     parser.add_argument("--text", nargs="+", help="One or more texts to classify.")
+    parser.add_argument("--input-file", type=Path, help="UTF-8 text file with one text per line.")
+    parser.add_argument(
+        "--input-format",
+        choices=["line", "paragraph", "whole"],
+        default="line",
+        help="How to split --input-file: line, paragraph separated by blank lines, or whole file.",
+    )
     parser.add_argument("--device", default=None, choices=["cpu", "cuda"], help="Override inference device.")
     parser.add_argument("--max-length", type=int, default=192)
     return parser.parse_args()
 
 
+def load_texts(args: argparse.Namespace) -> list[str]:
+    if args.text and args.input_file:
+        raise SystemExit("Use either --text or --input-file, not both.")
+    if args.input_file:
+        if not args.input_file.exists():
+            raise SystemExit(f"Input file does not exist: {args.input_file}")
+        content = args.input_file.read_text(encoding="utf-8")
+        if args.input_format == "whole":
+            return [content.strip()] if content.strip() else []
+        if args.input_format == "paragraph":
+            return [
+                " ".join(paragraph.split())
+                for paragraph in content.split("\n\n")
+                if paragraph.strip()
+            ]
+        return [line.strip() for line in content.splitlines() if line.strip()]
+    return args.text or DEFAULT_TEXTS
+
+
 def main() -> None:
     args = parse_args()
-    texts = args.text or DEFAULT_TEXTS
+    texts = load_texts(args)
+    if not texts:
+        raise SystemExit("No texts to classify.")
 
     if not args.model_dir.exists():
         raise SystemExit(f"Model directory does not exist: {args.model_dir}")
