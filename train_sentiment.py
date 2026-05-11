@@ -46,6 +46,7 @@ def normalize_label(value: object) -> str | None:
 def clean_frame(frame: pd.DataFrame, source: str | None) -> pd.DataFrame:
     frame = frame.copy()
     frame["label"] = frame["label"].map(normalize_label)
+    frame = frame[frame["text"].notna()]
     frame["text"] = frame["text"].astype(str).str.replace(r"\s+", " ", regex=True).str.strip()
     frame = frame[frame["label"].isin(LABELS) & frame["text"].ne("")]
     if source is not None:
