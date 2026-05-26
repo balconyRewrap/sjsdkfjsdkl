@@ -172,9 +172,15 @@ Check the trained safety model:
 
 ```bash
 UV_CACHE_DIR=.uv-cache uv run python test_safety_from_scratch.py
+UV_CACHE_DIR=.uv-cache uv run python test_safety_from_scratch.py --model-size big
 UV_CACHE_DIR=.uv-cache uv run python test_safety_from_scratch.py \
   --text "Как приготовить борщ дома?" "Нужно устроить нападение на группу людей"
 ```
+
+`test_safety_from_scratch.py` uses `--model-size auto` by default: it loads
+`models/scratch-transformer-safety-big` if that directory exists, otherwise it
+falls back to `models/scratch-transformer-safety`. Use `--model-dir` to point at
+any custom training output.
 
 The default checkpoint is `cointegrated/rubert-tiny2`, which trains quickly. For
 better quality on a GPU machine, try:
