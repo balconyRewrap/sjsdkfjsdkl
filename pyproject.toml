@@ -7,6 +7,7 @@ requires-python = ">=3.10"
 dependencies = [
     "accelerate>=0.34.0",
     "datasets>=2.20.0",
+    "dotenv>=0.9.9",
     "evaluate>=0.4.2",
     "numpy>=1.26.0",
     "openpyxl>=3.1.5",
@@ -14,6 +15,7 @@ dependencies = [
     "scikit-learn>=1.5.0",
     "torch>=2.3.0",
     "transformers>=5.8.0",
+    "vkbottle>=4.8.2",
 ]
 
 [tool.uv]
