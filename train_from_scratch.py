@@ -178,6 +178,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dim-feedforward", type=int, default=512)
     parser.add_argument("--dropout", type=float, default=0.1)
     parser.add_argument("--num-workers", type=int, default=0)
+    parser.add_argument(
+        "--log-every-steps",
+        type=int,
+        default=100,
+        help="Print train loss every N optimizer steps. Use 1 to log every batch.",
+    )
     parser.add_argument("--seed", type=int, default=42)
     return parser.parse_args()
 
@@ -256,11 +262,13 @@ def main() -> None:
     best_f1 = -1.0
     best_path = args.output_dir / "model.pt"
 
+    global_step = 0
     for epoch in range(1, args.epochs + 1):
         model.train()
         train_losses = []
         progress = tqdm(train_loader, desc=f"Epoch {epoch}/{args.epochs}")
-        for batch in progress:
+        for batch_index, batch in enumerate(progress, start=1):
+            global_step += 1
             input_ids = batch["input_ids"].to(device)
             attention_mask = batch["attention_mask"].to(device)
             labels = batch["labels"].to(device)
@@ -273,7 +281,18 @@ def main() -> None:
             optimizer.step()
 
             train_losses.append(float(loss.item()))
-            progress.set_postfix(train_loss=f"{np.mean(train_losses):.4f}")
+            running_loss = float(np.mean(train_losses))
+            progress.set_postfix(train_loss=f"{running_loss:.4f}")
+            if args.log_every_steps and global_step % args.log_every_steps == 0:
+                print(
+                    {
+                        "epoch": epoch,
+                        "batch": batch_index,
+                        "global_step": global_step,
+                        "train_loss": running_loss,
+                        "last_batch_loss": float(loss.item()),
+                    }
+                )
 
         metrics = evaluate(model, valid_loader, criterion, device)
         metrics["train_loss"] = float(np.mean(train_losses))

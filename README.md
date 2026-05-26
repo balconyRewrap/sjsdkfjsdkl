@@ -102,6 +102,80 @@ uv run python test_from_scratch.py
 uv run python test_from_scratch.py --text "Отличный товар" "Ужасное качество"
 ```
 
+## Train Russian safety classifier
+
+The repository also includes a second from-scratch classifier for information
+safety moderation. It uses the same compact PyTorch transformer architecture,
+but trains on safety datasets loaded from Hugging Face and predicts two labels:
+
+- `safe` — no detected safety risk;
+- `dangerous` — potentially harmful text that should be blocked or reviewed.
+
+The safety dataset builder currently supports:
+
+- `katanastas/aegis-safety-ru` as `aegis-safety-ru`;
+- `redmadrobot-rnd/nsfw_benchmark`, Russian rows only, as `nsfw-benchmark-ru`;
+- `ComplexDataLab/MLSNT`, Cyrillic rows only, as `mlsnt-ru`.
+- local sentiment datasets mapped to safe background examples as
+  `local-sentiment-safe`.
+- local Russian seed examples for explicit safety boundaries as
+  `local-safety-seed`.
+- local `RuEthnoHateExtended.json` as `ru-ethno-hate-extended`. It aggregates
+  assessor votes by `instance_id`, maps ethnicity-targeted negative speech to
+  `dangerous`, additionally escalates explicit extremist patterns or
+  slur-plus-violence/exclusion patterns, and maps neutral/positive ethnicity
+  mentions to `safe`.
+- `Xeonil/ru-merged-toxic-comments` as `ru-merged-toxic-comments`;
+- `klamas/russian-toxic` as `klamas-russian-toxic`;
+- `Mikimi/MultiLingvAllToxic`, Russian rows only, as `multilingvalltoxic-ru`.
+
+Broad toxic-comment datasets are useful as extra unsafe background, but they are
+not the same as information-safety or extremism datasets. By default
+`train_safety_from_scratch.py` limits their combined share to 20% with
+`--max-toxic-share 0.2`. Use `--max-toxic-share 1` to disable this limit.
+Use `--balance-ratio 1.0` to undersample `safe` examples to roughly match the
+number of `dangerous` examples. For example, `--balance-ratio 1.5` keeps at most
+1.5 safe examples per dangerous example.
+
+Build one combined safety dataset without training:
+
+```bash
+UV_CACHE_DIR=.uv-cache uv run python train_safety_from_scratch.py \
+  --sources aegis-safety-ru local-safety-seed local-sentiment-safe nsfw-benchmark-ru mlsnt-ru ru-merged-toxic-comments \
+  --max-toxic-share 0.2 \
+  --balance-ratio 1.0 \
+  --only-build-dataset \
+  --save-dataset prepared/combined_safety.csv.gz
+```
+
+Run a quick smoke test:
+
+```bash
+UV_CACHE_DIR=.uv-cache uv run python train_safety_from_scratch.py \
+  --sources aegis-safety-ru local-safety-seed local-sentiment-safe nsfw-benchmark-ru mlsnt-ru ru-merged-toxic-comments \
+  --max-toxic-share 0.2 \
+  --max-per-label 200 \
+  --epochs 1 \
+  --batch-size 32
+```
+
+Train the safety classifier:
+
+```bash
+UV_CACHE_DIR=.uv-cache uv run python train_safety_from_scratch.py \
+  --dataset-csv prepared/combined_safety.csv.gz \
+  --epochs 5 \
+  --batch-size 64
+```
+
+Check the trained safety model:
+
+```bash
+UV_CACHE_DIR=.uv-cache uv run python test_safety_from_scratch.py
+UV_CACHE_DIR=.uv-cache uv run python test_safety_from_scratch.py \
+  --text "Как приготовить борщ дома?" "Нужно устроить нападение на группу людей"
+```
+
 The default checkpoint is `cointegrated/rubert-tiny2`, which trains quickly. For
 better quality on a GPU machine, try:
 

@@ -1,5 +1,6 @@
 .venv/
 .uv-cache/
+.hf-cache/
 __pycache__/
 .pytest_cache/
 models/
